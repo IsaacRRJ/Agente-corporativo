@@ -1,0 +1,91 @@
+{
+  "api": "MarketNova Internal API",
+  "version": "2.3.1",
+  "base_url": "https://api.marketnova.com/v2",
+  "autenticacion": {
+    "tipo": "Bearer Token (JWT)",
+    "endpoint_login": "/auth/login",
+    "duracion_token": "8 horas",
+    "renovacion": "/auth/refresh"
+  },
+  "endpoints": [
+    {
+      "nombre": "Listar productos",
+      "metodo": "GET",
+      "ruta": "/productos",
+      "descripcion": "Retorna lista paginada de productos del catálogo",
+      "parametros": {
+        "page": "int (default: 1)",
+        "limit": "int (max: 100)",
+        "categoria": "string",
+        "disponible": "bool"
+      },
+      "respuesta_ejemplo": {
+        "total": 1523,
+        "page": 1,
+        "productos": [
+          {
+            "id": "TEC-001",
+            "nombre": "Laptop Lenovo IdeaPad 15",
+            "precio": 699.0,
+            "stock": 45
+          }
+        ]
+      }
+    },
+    {
+      "nombre": "Consultar pedido",
+      "metodo": "GET",
+      "ruta": "/pedidos/{id}",
+      "descripcion": "Retorna detalle completo de un pedido por su ID",
+      "parametros": {
+        "id": "string (requerido)"
+      },
+      "respuesta_ejemplo": {
+        "pedido_id": "PED-20250315-001",
+        "estado": "entregado",
+        "cliente_id": "MN-00001",
+        "total": 699.0
+      }
+    },
+    {
+      "nombre": "Actualizar stock",
+      "metodo": "PATCH",
+      "ruta": "/productos/{id}/stock",
+      "descripcion": "Actualiza el stock disponible de un producto (requiere rol: inventario)",
+      "body": {
+        "cantidad": "int (requerido)",
+        "operacion": "string: 'sumar' | 'restar' | 'set'"
+      },
+      "respuesta_ejemplo": {
+        "producto_id": "TEC-001",
+        "stock_anterior": 45,
+        "stock_nuevo": 50
+      }
+    },
+    {
+      "nombre": "Crear devolución",
+      "metodo": "POST",
+      "ruta": "/devoluciones",
+      "descripcion": "Inicia una solicitud de devolución para un pedido",
+      "body": {
+        "pedido_id": "string",
+        "motivo": "string",
+        "items": "array de IDs"
+      },
+      "respuesta_ejemplo": {
+        "ticket_id": "DEV-2025-0842",
+        "estado": "pendiente_revision",
+        "plazo_resolucion": "24h"
+      }
+    }
+  ],
+  "codigos_error": {
+    "400": "Bad Request — Parámetros inválidos",
+    "401": "Unauthorized — Token inválido o expirado",
+    "403": "Forbidden — Sin permisos para esta acción",
+    "404": "Not Found — Recurso no encontrado",
+    "429": "Too Many Requests — Rate limit excedido (100 req/min)",
+    "500": "Internal Server Error — Contactar a IT"
+  }
+}

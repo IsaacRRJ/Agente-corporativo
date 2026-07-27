@@ -1,0 +1,11 @@
+cliente_id,nombre,email,pais,ciudad,nivel,compras_total_usd,ultima_compra,estado
+MN-00001,Ana Rodríguez,ana.rodriguez@email.com,Paraguay,Asunción,Gold,1250.5,2025-03-15,Activo
+MN-00002,Carlos Méndez,c.mendez@email.com,Argentina,Buenos Aires,Silver,480.0,2025-02-28,Activo
+MN-00003,Lucía Fernández,lucia.f@email.com,Brasil,São Paulo,Platinum,3200.75,2025-03-20,Activo
+MN-00004,Diego Martínez,d.martinez@email.com,Paraguay,Ciudad del Este,Bronze,120.0,2024-11-10,Inactivo
+MN-00005,Valentina López,valen.lopez@email.com,Argentina,Córdoba,Gold,1870.3,2025-03-18,Activo
+MN-00006,Martín García,martin.g@email.com,Paraguay,Asunción,Silver,560.0,2025-01-05,Activo
+MN-00007,Sofía Herrera,sofia.herrera@email.com,Brasil,Río de Janeiro,Bronze,95.5,2024-10-22,Inactivo
+MN-00008,Andrés Jiménez,andres.j@email.com,Argentina,Rosario,Gold,1450.0,2025-03-12,Activo
+MN-00009,Camila Torres,camila.t@email.com,Paraguay,Asunción,Platinum,4100.25,2025-03-21,Activo
+MN-00010,Roberto Sosa,r.sosa@email.com,Brasil,Curitiba,Silver,320.8,2025-02-14,Activo

@@ -1,8 +1,10 @@
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
+
+sys.path.append(str(Path(__file__).parents[1]))
+from vectorstore.store import get_vectorstore
 
 from extractor import extract, SUPPORTED_EXTENSIONS
 from cleaner import clean
@@ -10,7 +12,6 @@ from cleaner import clean
 load_dotenv()
 
 DOCS_DIR = Path(__file__).parents[2] / "docs"
-CHROMA_DIR = Path(__file__).parents[2] / "chroma_db"
 
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 100
@@ -23,18 +24,12 @@ def get_category(path: Path) -> str:
 
 def ingest():
     print("Cargando modelo de embeddings...")
-    embeddings = HuggingFaceEmbeddings(model_name="paraphrase-multilingual-MiniLM-L12-v2")
+    vectorstore = get_vectorstore()
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
         separators=["\n\n", "\n", ". ", " ", ""],
-    )
-
-    vectorstore = Chroma(
-        collection_name="marketnova_docs",
-        embedding_function=embeddings,
-        persist_directory=str(CHROMA_DIR),
     )
 
     files = [

@@ -1,7 +1,6 @@
 # LLM & RAG
-anthropic
+google-generativeai
 langchain
-langchain-anthropic
 langchain-chroma
 langchain-huggingface
 
@@ -18,7 +17,6 @@ openpyxl
 beautifulsoup4
 
 # Utils
-pandas
 python-dotenv
 
 # API (Paso 5)

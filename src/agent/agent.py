@@ -1,15 +1,19 @@
-import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
-from anthropic import Anthropic
+import google.generativeai as genai
+import os
 
 sys.path.append(str(Path(__file__).parents[1]))
 from retrieval.retriever import retrieve
 
 load_dotenv()
 
-client = Anthropic()
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+client = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    system_instruction=None,  # se pasa en cada llamada
+)
 
 # Score mínimo del reranker para intentar generar respuesta.
 # Por debajo de este umbral, ningún fragmento es suficientemente relevante.
@@ -86,17 +90,12 @@ def answer(query: str, category: str | None = None) -> dict:
             "answered": False,
         }
 
-    prompt = PROMPT_TEMPLATE.format(context=context, query=query)
+    full_prompt = SYSTEM_PROMPT + "\n\n" + PROMPT_TEMPLATE.format(context=context, query=query)
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    response = client.generate_content(full_prompt)
 
     return {
-        "response": message.content[0].text,
+        "response": response.text,
         "sources": sources,
         "answered": True,
     }

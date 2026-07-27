@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 sys.path.append(str(Path(__file__).parents[1]))
 from vectorstore.store import get_vectorstore

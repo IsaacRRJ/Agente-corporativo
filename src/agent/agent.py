@@ -1,23 +1,19 @@
+import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
-import google.generativeai as genai
-import os
+from openai import OpenAI
 
 sys.path.append(str(Path(__file__).parents[1]))
 from retrieval.retriever import retrieve
 
 load_dotenv()
 
-genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-client = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
-    system_instruction=None,  # se pasa en cada llamada
-)
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 # Score mínimo del reranker para intentar generar respuesta.
 # Por debajo de este umbral, ningún fragmento es suficientemente relevante.
-CONFIDENCE_THRESHOLD = 0.0
+CONFIDENCE_THRESHOLD = -6.0
 
 AREA_CONTACTS = {
     "rrhh":       "rrhh@marketnova.com",
@@ -90,12 +86,17 @@ def answer(query: str, category: str | None = None) -> dict:
             "answered": False,
         }
 
-    full_prompt = SYSTEM_PROMPT + "\n\n" + PROMPT_TEMPLATE.format(context=context, query=query)
-
-    response = client.generate_content(full_prompt)
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": PROMPT_TEMPLATE.format(context=context, query=query)},
+        ],
+        max_tokens=1024,
+    )
 
     return {
-        "response": response.text,
+        "response": response.choices[0].message.content,
         "sources": sources,
         "answered": True,
     }

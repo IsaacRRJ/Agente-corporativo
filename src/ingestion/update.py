@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 sys.path.append(str(Path(__file__).parents[1]))
 from vectorstore.store import get_vectorstore

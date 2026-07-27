@@ -1,0 +1,59 @@
+name: Build & Deploy to OCI
+
+on:
+  push:
+    branches: [main]
+
+env:
+  OCI_REGION: mx-queretaro-1               # cambia a tu región OCI
+  OCIR_NAMESPACE: ${{ secrets.OCI_NAMESPACE }}
+  IMAGE_NAME: agente-corporativo
+
+jobs:
+  build-and-push:
+    name: Build Docker image & push to OCIR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Autenticarse en OCI Container Registry
+        run: |
+          echo "${{ secrets.OCI_TOKEN }}" | docker login \
+            ${{ env.OCI_REGION }}.ocir.io \
+            --username "${{ env.OCIR_NAMESPACE }}/${{ secrets.OCI_USER }}" \
+            --password-stdin
+
+      - name: Construir imagen Docker
+        run: |
+          docker build -t ${{ env.OCI_REGION }}.ocir.io/${{ env.OCIR_NAMESPACE }}/${{ env.IMAGE_NAME }}:latest .
+
+      - name: Subir imagen a OCIR
+        run: |
+          docker push ${{ env.OCI_REGION }}.ocir.io/${{ env.OCIR_NAMESPACE }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    name: Deploy en OCI Compute
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Conectar por SSH y actualizar contenedor
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.OCI_VM_IP }}
+          username: opc
+          key: ${{ secrets.OCI_SSH_KEY }}
+          script: |
+            docker pull ${{ env.OCI_REGION }}.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ env.IMAGE_NAME }}:latest
+            docker stop agente || true
+            docker rm agente || true
+            docker run -d \
+              --name agente \
+              --restart unless-stopped \
+              -p 80:8000 \
+              -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+              -v chroma_data:/app/chroma_db \
+              -v logs_data:/app/logs \
+              ${{ env.OCI_REGION }}.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ env.IMAGE_NAME }}:latest

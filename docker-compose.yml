@@ -1,0 +1,15 @@
+services:
+  agente:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/app/chroma_db
+      - logs_data:/app/logs
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+  logs_data:

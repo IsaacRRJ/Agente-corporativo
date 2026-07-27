@@ -5,8 +5,8 @@ langchain-anthropic
 langchain-chroma
 langchain-huggingface
 
-# Embeddings
-sentence-transformers
+# Embeddings & Reranking
+sentence-transformers  # embedding: paraphrase-multilingual-MiniLM-L12-v2 | reranker: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
 
 # Vector store
 chromadb
@@ -21,6 +21,6 @@ beautifulsoup4
 pandas
 python-dotenv
 
-# API (Paso 3)
+# API (Paso 5)
 fastapi
 uvicorn

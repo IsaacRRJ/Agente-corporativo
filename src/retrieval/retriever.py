@@ -50,7 +50,9 @@ def retrieve(
     )
 
     # 3. Selección de los mejores
-    top = [item for _, item in ranked[:k_final]]
+    top_scored = ranked[:k_final]
+    top_score = float(top_scored[0][0]) if top_scored else -99.0
+    top = [item for _, item in top_scored]
 
     # 4. Ensamblaje del contexto
     context_blocks = []
@@ -70,4 +72,4 @@ def retrieve(
         for c in top
     ]
 
-    return {"context": context, "sources": sources}
+    return {"context": context, "sources": sources, "top_score": top_score}

@@ -1,0 +1,26 @@
+# LLM & RAG
+anthropic
+langchain
+langchain-anthropic
+langchain-chroma
+langchain-huggingface
+
+# Embeddings
+sentence-transformers
+
+# Vector store
+chromadb
+
+# Document extractors
+pdfplumber
+python-docx
+openpyxl
+beautifulsoup4
+
+# Utils
+pandas
+python-dotenv
+
+# API (Paso 3)
+fastapi
+uvicorn

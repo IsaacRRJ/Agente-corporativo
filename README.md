@@ -6,7 +6,8 @@
 
 ## Demo
 
-> _Captura o video del agente en producción (se agregará tras el deploy)_
+https://agente-corporativo-p10h.onrender.com/
+
 
 ---
 
@@ -183,18 +184,12 @@ Abre tu navegador en `http://localhost:8000` e ingresa con un código de emplead
 
 ---
 
-## Deploy en Oracle Cloud (OCI)
 
-> _Instrucciones de deploy en OCI Compute (Always Free tier) — en progreso_
 
 ---
 
 ## Autor
 
-Desarrollado como parte del desafío **Alura Agentes**.
+Desarrollado por Isaac Ruiz como parte del desafío **Alura Agentes**.
 
 ---
-
-## Licencia
-
-MIT

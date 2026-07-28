@@ -6,8 +6,9 @@
 
 ## Demo
 
-https://agente-corporativo-p10h.onrender.com/
+![Agente Corporativo MarketNova](assets/imagen.png)
 
+🔗 **Demo en vivo:** https://agente-corporativo-p10h.onrender.com/
 
 ---
 

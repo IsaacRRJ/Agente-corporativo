@@ -2,10 +2,8 @@
 openai
 langchain
 langchain-chroma
-langchain-huggingface
-
-# Embeddings & Reranking
-sentence-transformers  # embedding: paraphrase-multilingual-MiniLM-L12-v2 | reranker: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+langchain-openai
+langchain-text-splitters
 
 # Vector store
 chromadb
@@ -19,6 +17,6 @@ beautifulsoup4
 # Utils
 python-dotenv
 
-# API (Paso 5)
+# API
 fastapi
 uvicorn

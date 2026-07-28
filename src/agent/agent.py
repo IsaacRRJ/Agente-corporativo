@@ -13,7 +13,7 @@ client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 # Score mínimo del reranker para intentar generar respuesta.
 # Por debajo de este umbral, ningún fragmento es suficientemente relevante.
-CONFIDENCE_THRESHOLD = -6.0
+CONFIDENCE_THRESHOLD = 0.1
 
 AREA_CONTACTS = {
     "rrhh":       "rrhh@marketnova.com",

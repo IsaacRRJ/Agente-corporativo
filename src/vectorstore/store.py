@@ -1,10 +1,13 @@
+import os
 from pathlib import Path
-from langchain_huggingface import HuggingFaceEmbeddings
+from dotenv import load_dotenv
+from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
+
+load_dotenv()
 
 CHROMA_DIR = Path(__file__).parents[2] / "chroma_db"
 COLLECTION_NAME = "marketnova_docs"
-EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
 
 _vectorstore: Chroma | None = None
 
@@ -12,7 +15,10 @@ _vectorstore: Chroma | None = None
 def get_vectorstore() -> Chroma:
     global _vectorstore
     if _vectorstore is None:
-        embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+        embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-small",
+            api_key=os.environ["OPENAI_API_KEY"],
+        )
         _vectorstore = Chroma(
             collection_name=COLLECTION_NAME,
             embedding_function=embeddings,

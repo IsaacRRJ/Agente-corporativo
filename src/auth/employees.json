@@ -1,0 +1,11 @@
+{
+  "employees": [
+    {"code": "MN-JRUIZ",   "name": "Juan Ruiz",       "area": "Sistemas"},
+    {"code": "MN-MLOPEZ",  "name": "María López",     "area": "RRHH"},
+    {"code": "MN-CGARCIA", "name": "Carlos García",   "area": "Financiero"},
+    {"code": "MN-AVIEIRA", "name": "Ana Vieira",      "area": "Legal"},
+    {"code": "MN-PSANTOS", "name": "Pedro Santos",    "area": "Operacional"},
+    {"code": "MN-RDIAS",   "name": "Rita Díaz",       "area": "Marketing"},
+    {"code": "MN-DEMO01",  "name": "Usuario Demo",    "area": "General"}
+  ]
+}

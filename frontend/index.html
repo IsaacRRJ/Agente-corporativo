@@ -5,275 +5,1081 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Agente Corporativo — MarketNova</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ============================================================
+       Reset & Variables
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:       #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #6366f1;
+      --primary-dim:   rgba(99, 102, 241, 0.14);
+      --primary-glow:  rgba(79, 70, 229, 0.18);
+
+      --sidebar-bg:     #111827;
+      --sidebar-border: #1f2937;
+      --sidebar-muted:  #9ca3af;
+      --sidebar-active: #a5b4fc;
+
+      --chat-bg:     #f3f4f6;
+      --bubble-user: #4f46e5;
+      --bubble-agent:#ffffff;
+
+      --border:    #e5e7eb;
+      --text:      #111827;
+      --text-muted:#6b7280;
+      --radius:    12px;
+    }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      color: var(--text);
+    }
+
+    .hidden { display: none !important; }
+
+    /* ============================================================
+       LOGIN SCREEN
+    ============================================================ */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      background: #0a0c14;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .login-card {
+      background: #13151f;
+      border: 1px solid #252840;
+      border-radius: 20px;
+      padding: 44px 40px;
+      width: 400px;
+      max-width: 92vw;
+    }
+
+    .login-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+
+    .login-brand-badge {
+      width: 44px;
+      height: 44px;
+      background: var(--primary);
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+
+    .login-brand h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #f9fafb;
+    }
+
+    .login-brand p {
+      font-size: 12px;
+      color: #4b5563;
+      margin-top: 2px;
+    }
+
+    .login-heading {
+      font-size: 21px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 6px;
+    }
+
+    .login-sub {
+      font-size: 13.5px;
+      color: #6b7280;
+      line-height: 1.55;
+      margin-bottom: 28px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    #code-input {
+      width: 100%;
+      background: #0a0c14;
+      border: 1.5px solid #252840;
+      border-radius: 10px;
+      padding: 12px 15px;
+      font-size: 15px;
+      font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+      color: #e2e8f0;
+      letter-spacing: 2px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 8px;
+    }
+
+    #code-input::placeholder {
+      color: #3a3d55;
+      letter-spacing: 1px;
+      font-family: -apple-system, sans-serif;
+    }
+
+    #code-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    #code-input.shake {
+      animation: shake 0.35s ease;
+      border-color: #ef4444;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-6px); }
+      40%       { transform: translateX(6px); }
+      60%       { transform: translateX(-4px); }
+      80%       { transform: translateX(4px); }
+    }
+
+    #login-error {
+      min-height: 18px;
+      font-size: 12.5px;
+      color: #f87171;
+      margin-bottom: 22px;
+    }
+
+    #login-btn {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-bottom: 20px;
+    }
+
+    #login-btn:hover:not(:disabled)  { background: var(--primary-hover); }
+    #login-btn:active:not(:disabled) { transform: scale(0.99); }
+    #login-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .login-footer {
+      font-size: 12px;
+      color: #374151;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .login-footer a { color: #6366f1; text-decoration: none; }
+
+    /* ============================================================
+       APP LAYOUT
+    ============================================================ */
+    #app {
+      display: none; /* JS controla visibilidad con inline style */
       height: 100vh;
     }
 
-    header {
-      background: #1a1a2e;
-      color: #fff;
-      padding: 14px 24px;
+    /* ============================================================
+       SIDEBAR
+    ============================================================ */
+    #sidebar {
+      width: 238px;
+      min-width: 238px;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      padding: 18px 10px;
+      border-right: 1px solid var(--sidebar-border);
+    }
+
+    .sidebar-brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      padding: 4px 10px 18px;
     }
 
-    header .badge {
-      background: #e94560;
+    .sidebar-badge {
+      width: 34px;
+      height: 34px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 11px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand-name { font-size: 14px; font-weight: 700; color: #f9fafb; }
+    .sidebar-brand-sub  { font-size: 11px; color: #374151; margin-top: 2px; }
+
+    .sidebar-sep {
+      height: 1px;
+      background: var(--sidebar-border);
+      margin: 0 10px 14px;
+    }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #374151;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 0 12px;
+      margin-bottom: 6px;
+    }
+
+    #category-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .cat-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 12px;
+      border: none;
+      background: transparent;
+      color: var(--sidebar-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13.5px;
+      text-align: left;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .cat-btn:hover {
+      background: rgba(255,255,255,0.05);
+      color: #e5e7eb;
+    }
+
+    .cat-btn.active {
+      background: var(--primary-dim);
+      color: var(--sidebar-active);
+    }
+
+    .cat-icon {
+      font-size: 14px;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .sidebar-spacer { flex: 1; }
+
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 12px;
+      background: #1a2035;
+      border-radius: 10px;
+      border: 1px solid var(--sidebar-border);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-dept {
+      font-size: 11px;
+      color: #4b5563;
+      margin-top: 1px;
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #374151;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .logout-btn:hover {
+      color: #ef4444;
+      background: rgba(239,68,68,0.1);
+    }
+
+    /* ============================================================
+       MAIN AREA
+    ============================================================ */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 13px 24px;
+      flex-shrink: 0;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .topbar-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .ai-badge {
+      background: var(--primary-dim);
+      color: var(--primary-light);
+      font-size: 10px;
+      font-weight: 700;
       padding: 2px 8px;
       border-radius: 20px;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
     }
 
-    header h1 { font-size: 18px; font-weight: 600; }
-    header p  { font-size: 12px; color: #aaa; margin-top: 2px; }
+    .filter-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
 
+    .filter-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      flex-shrink: 0;
+    }
+
+    /* Chat area */
     #chat {
       flex: 1;
       overflow-y: auto;
-      padding: 24px;
+      padding: 28px 24px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
+      background: var(--chat-bg);
     }
 
+    #chat::-webkit-scrollbar { width: 5px; }
+    #chat::-webkit-scrollbar-track { background: transparent; }
+    #chat::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+    /* Messages */
     .msg {
-      max-width: 75%;
-      padding: 12px 16px;
-      border-radius: 12px;
-      line-height: 1.55;
-      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      max-width: 74%;
     }
 
-    .msg.user {
-      background: #1a1a2e;
-      color: #fff;
-      align-self: flex-end;
+    .msg.user  { align-self: flex-end; align-items: flex-end; }
+    .msg.agent { align-self: flex-start; align-items: flex-start; }
+
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .msg.user .msg-bubble {
+      background: var(--bubble-user);
+      color: white;
       border-bottom-right-radius: 4px;
     }
 
-    .msg.agent {
-      background: #fff;
-      color: #222;
-      align-self: flex-start;
+    .msg.agent .msg-bubble {
+      background: var(--bubble-agent);
+      color: var(--text);
       border-bottom-left-radius: 4px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+      white-space: pre-wrap;
     }
 
-    .msg.agent .text { white-space: pre-wrap; }
-
-    .sources {
-      margin-top: 10px;
-      padding-top: 8px;
-      border-top: 1px solid #eee;
-      font-size: 12px;
-      color: #666;
-    }
-
-    .sources span { font-weight: 600; color: #444; }
-
-    .source-tag {
-      display: inline-block;
-      background: #f0f2f5;
-      border-radius: 6px;
-      padding: 2px 8px;
-      margin: 3px 3px 0 0;
-      font-size: 11px;
-      color: #555;
-    }
-
-    .feedback {
-      margin-top: 8px;
+    /* Thinking bubble */
+    .msg-bubble.thinking {
       display: flex;
-      gap: 8px;
-    }
-
-    .feedback button {
-      background: none;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 3px 10px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background 0.15s;
-    }
-
-    .feedback button:hover { background: #f5f5f5; }
-    .feedback button.selected { background: #e8f5e9; border-color: #81c784; }
-
-    .thinking {
-      font-style: italic;
-      color: #999;
-      font-size: 13px;
-      align-self: flex-start;
-    }
-
-    #input-area {
-      background: #fff;
-      border-top: 1px solid #ddd;
-      padding: 16px 24px;
-      display: flex;
+      align-items: center;
       gap: 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+      white-space: normal;
     }
 
-    #input-area input {
-      flex: 1;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 14px;
-      outline: none;
+    .dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-shrink: 0;
     }
 
-    #input-area input:focus { border-color: #1a1a2e; }
+    .dots span {
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #d1d5db;
+      animation: dot-bounce 1.4s infinite;
+    }
 
-    #input-area button {
-      background: #1a1a2e;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 20px;
-      font-size: 14px;
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dot-bounce {
+      0%, 80%, 100% { transform: translateY(0); background: #d1d5db; }
+      40%            { transform: translateY(-5px); background: var(--primary-light); }
+    }
+
+    /* Sources */
+    .msg-sources {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .sources-label {
+      flex-basis: 100%;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .source-chip {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    /* Feedback */
+    .msg-feedback {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .msg-feedback button {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 4px 11px;
       cursor: pointer;
-      transition: background 0.15s;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: all 0.15s;
     }
 
-    #input-area button:disabled { background: #999; cursor: not-allowed; }
-    #input-area button:hover:not(:disabled) { background: #16213e; }
+    .msg-feedback button:hover  { background: #f9fafb; border-color: #d1d5db; }
+    .msg-feedback button.liked  { background: #f0fdf4; border-color: #86efac; }
+    .msg-feedback button.disliked { background: #fef2f2; border-color: #fca5a5; }
+
+    /* Input area */
+    #input-area {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    #query {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 15px;
+      font-size: 14px;
+      color: var(--text);
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #query:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+      background: white;
+    }
+
+    #query::placeholder { color: #9ca3af; }
+
+    #send-btn {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    #send-btn:hover:not(:disabled)  { background: var(--primary-hover); }
+    #send-btn:active:not(:disabled) { transform: scale(0.94); }
+    #send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
-<header>
-  <div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <h1>Agente Corporativo</h1>
-      <span class="badge">IA</span>
+<!-- ============================================================
+     LOGIN SCREEN
+============================================================ -->
+<div id="login-screen">
+  <div class="login-card">
+
+    <div class="login-brand">
+      <div class="login-brand-badge">MN</div>
+      <div>
+        <h1>MarketNova</h1>
+        <p>Portal del Colaborador</p>
+      </div>
     </div>
-    <p>MarketNova · Responde con base en documentos internos oficiales</p>
-  </div>
-</header>
 
-<div id="chat">
-  <div class="msg agent">
-    <div class="text">¡Hola! Soy el agente corporativo de MarketNova 👋
+    <h2 class="login-heading">Bienvenido</h2>
+    <p class="login-sub">Ingresa tu código de empleado para acceder al agente corporativo de conocimiento interno.</p>
 
-Puedo ayudarte a consultar políticas internas, procesos y documentación de la empresa. ¿En qué puedo ayudarte hoy?</div>
+    <label class="field-label" for="code-input">Código de empleado</label>
+    <input
+      id="code-input"
+      type="text"
+      placeholder="MN-XXXXX"
+      maxlength="12"
+      autocomplete="off"
+      spellcheck="false"
+    />
+
+    <div id="login-error"></div>
+
+    <button id="login-btn">Ingresar</button>
+
+    <p class="login-footer">
+      ¿No tienes código? Contacta a
+      <a href="mailto:soporte@marketnova.com">Sistemas</a>
+    </p>
+
   </div>
 </div>
 
-<div id="input-area">
-  <input id="query" type="text" placeholder="Escribe tu pregunta..." autocomplete="off" />
-  <button id="send-btn" onclick="sendMessage()">Enviar</button>
+
+<!-- ============================================================
+     MAIN APP
+============================================================ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+
+    <div class="sidebar-brand">
+      <div class="sidebar-badge">MN</div>
+      <div>
+        <div class="sidebar-brand-name">MarketNova</div>
+        <div class="sidebar-brand-sub">Agente Corporativo</div>
+      </div>
+    </div>
+
+    <div class="sidebar-sep"></div>
+
+    <div class="sidebar-label">Área de búsqueda</div>
+    <nav id="category-nav"></nav>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Empleado</div>
+        <div class="user-dept" id="user-dept">General</div>
+      </div>
+      <button class="logout-btn" id="logout-btn" title="Cerrar sesión">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div id="main">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title">Agente Corporativo</span>
+        <span class="ai-badge">IA</span>
+      </div>
+      <div class="filter-pill">
+        <span class="filter-dot"></span>
+        <span id="topbar-filter">Todas las áreas</span>
+      </div>
+    </header>
+
+    <div id="chat"></div>
+
+    <div id="input-area">
+      <input id="query" type="text" placeholder="Escribe tu pregunta..." autocomplete="off" />
+      <button id="send-btn" title="Enviar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
 </div>
+
 
 <script>
-  const chat = document.getElementById("chat");
-  const input = document.getElementById("query");
-  const btn   = document.getElementById("send-btn");
+  // ============================================================
+  // State
+  // ============================================================
+  let token           = localStorage.getItem('mn_token');
+  let currentEmployee = JSON.parse(localStorage.getItem('mn_employee') || 'null');
+  let currentCategory = null;
 
-  input.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
+  const CATEGORIES = [
+    { id: null,          label: 'Todas las áreas',  icon: '🔍' },
+    { id: 'rrhh',        label: 'Recursos Humanos', icon: '👥' },
+    { id: 'financiero',  label: 'Financiero',       icon: '💰' },
+    { id: 'legal',       label: 'Legal',            icon: '⚖️'  },
+    { id: 'sistemas',    label: 'Sistemas',         icon: '💻' },
+    { id: 'operacional', label: 'Operacional',      icon: '⚙️'  },
+    { id: 'marketing',   label: 'Marketing',        icon: '📣' },
+  ];
 
-  function addMessage(role, text, sources = [], answered = true) {
-    const div = document.createElement("div");
-    div.className = `msg ${role}`;
+  // DOM references (safe after DOMContentLoaded)
+  let chatEl, queryEl, sendBtnEl;
 
-    if (role === "agent") {
-      const textEl = document.createElement("div");
-      textEl.className = "text";
-      textEl.textContent = text;
-      div.appendChild(textEl);
+  // ============================================================
+  // Init
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    chatEl    = document.getElementById('chat');
+    queryEl   = document.getElementById('query');
+    sendBtnEl = document.getElementById('send-btn');
 
-      if (sources && sources.length > 0) {
-        const src = document.createElement("div");
-        src.className = "sources";
-        src.innerHTML = "<span>Fuentes:</span><br/>";
-        sources.forEach(s => {
-          const tag = document.createElement("span");
-          tag.className = "source-tag";
-          tag.textContent = `${s.filename} (${s.category})`;
-          src.appendChild(tag);
-        });
-        div.appendChild(src);
-      }
+    buildCategoryNav();
 
-      if (answered) {
-        const fb = document.createElement("div");
-        fb.className = "feedback";
-        fb.innerHTML = `
-          <button onclick="sendFeedback(this, '${encodeURIComponent(input.dataset.last || '')}', '${encodeURIComponent(text)}', 'positive')">👍</button>
-          <button onclick="sendFeedback(this, '${encodeURIComponent(input.dataset.last || '')}', '${encodeURIComponent(text)}', 'negative')">👎</button>
-        `;
-        div.appendChild(fb);
-      }
+    // Login events
+    const codeInput = document.getElementById('code-input');
+    const loginBtn  = document.getElementById('login-btn');
+
+    codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    codeInput.addEventListener('input', function () {
+      const pos = this.selectionStart;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(pos, pos);
+      this.classList.remove('shake');
+      document.getElementById('login-error').textContent = '';
+    });
+    loginBtn.addEventListener('click', doLogin);
+
+    // Chat events
+    queryEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+    sendBtnEl.addEventListener('click', sendMessage);
+    document.getElementById('logout-btn').addEventListener('click', doLogout);
+
+    // Validar sesión antes de mostrar la app
+    if (token && currentEmployee) {
+      validateSession();
     } else {
-      div.textContent = text;
+      showLogin();
+    }
+  });
+
+  async function validateSession() {
+    try {
+      const res = await fetch('/me', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        showApp();
+      } else {
+        // Token inválido (ej: servidor reiniciado) → ir a login
+        localStorage.removeItem('mn_token');
+        localStorage.removeItem('mn_employee');
+        token = null;
+        currentEmployee = null;
+        showLogin();
+      }
+    } catch {
+      // Sin conexión al servidor: mostrar app igual (offline resilience)
+      showApp();
+    }
+  }
+
+  // ============================================================
+  // Auth — Login / Logout
+  // ============================================================
+  function showLogin() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    setTimeout(() => document.getElementById('code-input').focus(), 60);
+  }
+
+  function showApp() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+
+    const emp = currentEmployee;
+    document.getElementById('user-avatar').textContent = emp.name.charAt(0).toUpperCase();
+    document.getElementById('user-name').textContent   = emp.name;
+    document.getElementById('user-dept').textContent   = emp.area;
+
+    if (chatEl && chatEl.children.length === 0) {
+      const first = emp.name.split(' ')[0];
+      addAgentMessage(
+        `¡Hola, ${first}! Soy el agente corporativo de MarketNova.\n\nPuedo ayudarte a consultar políticas internas, procesos y documentación de la empresa.\n\nUsa el menú de la izquierda para filtrar por área, o escribe directamente tu pregunta.`
+      );
     }
 
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-    return div;
+    setTimeout(() => queryEl && queryEl.focus(), 60);
+  }
+
+  async function doLogin() {
+    const codeInput = document.getElementById('code-input');
+    const errorEl   = document.getElementById('login-error');
+    const btn       = document.getElementById('login-btn');
+    const code      = codeInput.value.trim();
+
+    if (!code) {
+      errorEl.textContent = 'Ingresa tu código de empleado.';
+      triggerShake(codeInput);
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Verificando...';
+    errorEl.textContent = '';
+
+    try {
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+
+      if (!res.ok) {
+        errorEl.textContent = 'Código inválido. Verifica tu código e intenta de nuevo.';
+        triggerShake(codeInput);
+        return;
+      }
+
+      const data = await res.json();
+      token           = data.token;
+      currentEmployee = data.employee;
+      localStorage.setItem('mn_token',    token);
+      localStorage.setItem('mn_employee', JSON.stringify(currentEmployee));
+      showApp();
+
+    } catch {
+      errorEl.textContent = 'Error de conexión. Verifica que el servidor esté activo.';
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Ingresar';
+    }
+  }
+
+  async function doLogout() {
+    try {
+      await fetch('/logout', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+    } catch {}
+
+    localStorage.removeItem('mn_token');
+    localStorage.removeItem('mn_employee');
+    token           = null;
+    currentEmployee = null;
+    chatEl.innerHTML = '';
+    document.getElementById('code-input').value = '';
+    showLogin();
+  }
+
+  function triggerShake(el) {
+    el.classList.remove('shake');
+    void el.offsetWidth; // reflow to restart animation
+    el.classList.add('shake');
+  }
+
+  // ============================================================
+  // Category Filter
+  // ============================================================
+  function buildCategoryNav() {
+    const nav = document.getElementById('category-nav');
+    CATEGORIES.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'cat-btn' + (cat.id === null ? ' active' : '');
+      btn.dataset.catId = cat.id ?? '__all__';
+
+      const iconEl  = document.createElement('span');
+      iconEl.className   = 'cat-icon';
+      iconEl.textContent = cat.icon;
+
+      const labelEl = document.createElement('span');
+      labelEl.textContent = cat.label;
+
+      btn.appendChild(iconEl);
+      btn.appendChild(labelEl);
+      btn.addEventListener('click', () => selectCategory(cat.id, cat.label, btn));
+      nav.appendChild(btn);
+    });
+  }
+
+  function selectCategory(id, label, clickedBtn) {
+    currentCategory = id;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    clickedBtn.classList.add('active');
+    document.getElementById('topbar-filter').textContent = label;
+  }
+
+  // ============================================================
+  // Messages
+  // ============================================================
+  function addUserMessage(text) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg user';
+    const bubble = document.createElement('div');
+    bubble.className   = 'msg-bubble';
+    bubble.textContent = text;
+    wrapper.appendChild(bubble);
+    chatEl.appendChild(wrapper);
+    scrollChat();
+  }
+
+  function addAgentMessage(text, sources = [], answered = true, queryForFeedback = '') {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg agent';
+
+    const bubble = document.createElement('div');
+    bubble.className   = 'msg-bubble';
+    bubble.textContent = text;
+    wrapper.appendChild(bubble);
+
+    // Sources
+    if (sources.length > 0) {
+      const srcEl = document.createElement('div');
+      srcEl.className = 'msg-sources';
+
+      const lbl = document.createElement('span');
+      lbl.className   = 'sources-label';
+      lbl.textContent = 'Fuentes:';
+      srcEl.appendChild(lbl);
+
+      sources.forEach(s => {
+        const chip = document.createElement('span');
+        chip.className   = 'source-chip';
+        chip.textContent = `${s.filename} · ${s.category}`;
+        srcEl.appendChild(chip);
+      });
+
+      wrapper.appendChild(srcEl);
+    }
+
+    // Feedback buttons (only on answered responses)
+    if (answered) {
+      const fb = document.createElement('div');
+      fb.className = 'msg-feedback';
+
+      const posBtn = document.createElement('button');
+      posBtn.textContent = '👍';
+      posBtn.title       = 'Fue útil';
+      posBtn.addEventListener('click', () => {
+        fb.querySelectorAll('button').forEach(b => b.classList.remove('liked', 'disliked'));
+        posBtn.classList.add('liked');
+        sendFeedback(queryForFeedback, text, 'positive');
+      });
+
+      const negBtn = document.createElement('button');
+      negBtn.textContent = '👎';
+      negBtn.title       = 'No fue útil';
+      negBtn.addEventListener('click', () => {
+        fb.querySelectorAll('button').forEach(b => b.classList.remove('liked', 'disliked'));
+        negBtn.classList.add('disliked');
+        sendFeedback(queryForFeedback, text, 'negative');
+      });
+
+      fb.appendChild(posBtn);
+      fb.appendChild(negBtn);
+      wrapper.appendChild(fb);
+    }
+
+    chatEl.appendChild(wrapper);
+    scrollChat();
+    return wrapper;
   }
 
   function addThinking() {
-    const div = document.createElement("div");
-    div.className = "thinking";
-    div.textContent = "Buscando en los documentos...";
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-    return div;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg agent';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble thinking';
+
+    const dots = document.createElement('div');
+    dots.className = 'dots';
+    for (let i = 0; i < 3; i++) {
+      dots.appendChild(document.createElement('span'));
+    }
+
+    const txt = document.createElement('span');
+    txt.textContent = 'Buscando en los documentos...';
+
+    bubble.appendChild(dots);
+    bubble.appendChild(txt);
+    wrapper.appendChild(bubble);
+    chatEl.appendChild(wrapper);
+    scrollChat();
+    return wrapper;
   }
 
-  async function sendMessage() {
-    const query = input.value.trim();
-    if (!query) return;
+  function scrollChat() {
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
 
-    input.dataset.last = query;
-    addMessage("user", query);
-    input.value = "";
-    btn.disabled = true;
+  // ============================================================
+  // Send Message
+  // ============================================================
+  async function sendMessage() {
+    const query = queryEl.value.trim();
+    if (!query || sendBtnEl.disabled) return;
+
+    const capturedQuery = query;
+    addUserMessage(query);
+    queryEl.value      = '';
+    sendBtnEl.disabled = true;
 
     const thinking = addThinking();
 
     try {
-      const res = await fetch("/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+      const res = await fetch('/ask', {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ query, category: currentCategory }),
       });
-      const data = await res.json();
+
       thinking.remove();
-      addMessage("agent", data.response, data.sources, data.answered);
+
+      if (res.status === 401) {
+        doLogout();
+        return;
+      }
+
+      const data = await res.json();
+      addAgentMessage(data.response, data.sources, data.answered, capturedQuery);
+
     } catch {
       thinking.remove();
-      addMessage("agent", "Ocurrió un error al procesar tu pregunta. Por favor intenta de nuevo.");
+      addAgentMessage('Ocurrió un error al procesar tu pregunta. Por favor intenta de nuevo.');
     }
 
-    btn.disabled = false;
-    input.focus();
+    sendBtnEl.disabled = false;
+    queryEl.focus();
   }
 
-  async function sendFeedback(btn, query, response, rating) {
-    btn.parentElement.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    await fetch("/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: decodeURIComponent(query),
-        response: decodeURIComponent(response),
-        rating,
-      }),
-    });
+  // ============================================================
+  // Feedback
+  // ============================================================
+  async function sendFeedback(query, response, rating) {
+    try {
+      await fetch('/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ query, response, rating }),
+      });
+    } catch {}
   }
 </script>
-
 </body>
 </html>

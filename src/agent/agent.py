@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
@@ -11,12 +12,23 @@ load_dotenv()
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-# Score mínimo del reranker para intentar generar respuesta.
-# Por debajo de este umbral, ningún fragmento es suficientemente relevante.
-CONFIDENCE_THRESHOLD = 0.1
+# Distancia L2 máxima aceptable (menor = más similar).
+# Basado en datos reales: contenido relevante ≤ 1.3, irrelevante ≥ 1.4.
+MAX_DISTANCE = 1.3
+
+# Mensajes conversacionales que no deben pasar por el pipeline RAG
+_CONVERSATIONAL_RE = re.compile(
+    r"^\s*(hola|buenas?|buenos\s+d[ií]as?|buenas?\s+tardes?|buenas?\s+noches?|"
+    r"hi|hello|hey|gracias?|thank|de\s+nada|ok|okay|perfecto|genial|entendido|"
+    r"listo|bien|claro|nos\s+vemos|hasta\s+luego|adi[oó]s|chao|bye|"
+    r"qu[eé]\s+tal|c[oó]mo\s+est[aá]s?|c[oó]mo\s+andas?|"
+    r"qu[eé]\s+puedes\s+hacer|para\s+qu[eé]\s+sirves|"
+    r"ayúdame|ayudame|necesito\s+ayuda|puedes\s+ayudarme)\s*[!?.]*\s*$",
+    re.IGNORECASE,
+)
 
 AREA_CONTACTS = {
-    "rrhh":       "rrhh@marketnova.com",
+    "rrhh":        "rrhh@marketnova.com",
     "financiero":  "finanzas@marketnova.com",
     "legal":       "legal@marketnova.com",
     "sistemas":    "soporte@marketnova.com",
@@ -24,17 +36,18 @@ AREA_CONTACTS = {
     "marketing":   "marketing@marketnova.com",
 }
 
-SYSTEM_PROMPT = """Eres el agente corporativo de MarketNova, una asistente interna que ayuda a los colaboradores a consultar políticas, procesos y documentación de la empresa.
+# --- Prompts para respuestas con contexto RAG ---
 
-Reglas que debes seguir siempre:
+RAG_SYSTEM = """Eres el agente corporativo de MarketNova, una asistente interna que ayuda a los colaboradores a consultar políticas, procesos y documentación de la empresa.
+
+Reglas:
 1. Responde ÚNICAMENTE con base en el contexto de documentos proporcionado. No uses conocimiento externo.
-2. Si el contexto no contiene la información necesaria para responder, dilo explícitamente.
+2. Si el contexto no contiene la información necesaria, dilo explícitamente.
 3. Cita siempre la fuente al final de tu respuesta, indicando el nombre del archivo y la categoría.
 4. Sé claro, directo y usa un tono profesional pero amigable.
-5. Si la pregunta es ambigua, aclara en qué documento encontraste la información.
-"""
+5. Si la pregunta es ambigua, aclara en qué documento encontraste la información."""
 
-PROMPT_TEMPLATE = """Contexto de documentos internos de MarketNova:
+RAG_PROMPT = """Contexto de documentos internos de MarketNova:
 
 {context}
 
@@ -42,64 +55,94 @@ PROMPT_TEMPLATE = """Contexto de documentos internos de MarketNova:
 
 Pregunta del colaborador: {query}
 
-Responde con base únicamente en el contexto anterior. Al final de tu respuesta incluye una sección "Fuentes:" con los archivos utilizados."""
-
-FALLBACK_TEMPLATE = """Lo siento, no encontré información sobre eso en los documentos internos disponibles de MarketNova.
-
-Te recomiendo contactar directamente al área responsable:
-{contacts}
-
-Si crees que este tema debería estar cubierto en la base de conocimiento, puedes reportarlo al equipo de Sistemas (soporte@marketnova.com)."""
+Responde con base únicamente en el contexto anterior. Sé claro y directo. No incluyas una sección de fuentes al final."""
 
 
-def _build_fallback(sources: list[dict]) -> str:
-    categories = {s["category"] for s in sources if s.get("category")}
-    if categories:
-        contacts = "\n".join(
-            f"- {cat.upper()}: {AREA_CONTACTS.get(cat, 'consulta con tu líder directo')}"
-            for cat in sorted(categories)
-        )
-    else:
-        contacts = "- Recursos Humanos: rrhh@marketnova.com\n- Sistemas: soporte@marketnova.com"
-    return FALLBACK_TEMPLATE.format(contacts=contacts)
+# --- Prompts para saludos y preguntas sin contexto ---
+
+CONVERSATIONAL_SYSTEM = """Eres el agente corporativo de MarketNova, una asistente interna amigable y profesional.
+
+Tu función principal es ayudar a los colaboradores a consultar documentos internos en estas áreas:
+- RRHH: vacaciones, beneficios, onboarding (rrhh@marketnova.com)
+- Financiero: gastos, reembolsos (finanzas@marketnova.com)
+- Legal: privacidad, compliance (legal@marketnova.com)
+- Sistemas: APIs, soporte técnico (soporte@marketnova.com)
+- Operacional: devoluciones, envíos (operaciones@marketnova.com)
+- Marketing: catálogo, precios (marketing@marketnova.com)
+
+Comportamiento según el tipo de mensaje:
+- Saludo, agradecimiento o comentario casual → responde con calidez y brevedad, invita al colaborador a hacer preguntas sobre los documentos.
+- Pregunta sobre la empresa sin información disponible → explícalo claramente y sugiere el contacto del área responsable.
+- Nunca inventes información que no provenga de los documentos internos."""
+
+CONVERSATIONAL_PROMPT = """El colaborador envió este mensaje: "{query}"
+
+No encontré documentos internos relevantes para esta consulta.
+
+Responde de forma apropiada:
+- Saludo o mensaje casual → responde con calidez y guíalo a hacer preguntas sobre los documentos.
+- Pregunta sin información disponible → indica que no encontraste la información y sugiere el área de contacto más apropiada."""
 
 
 def answer(query: str, category: str | None = None) -> dict:
-    """
-    Responde una pregunta del colaborador usando el pipeline RAG completo.
+    # Mensajes conversacionales: omitir RAG por completo
+    if _CONVERSATIONAL_RE.match(query.strip()):
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": CONVERSATIONAL_SYSTEM},
+                {"role": "user",   "content": CONVERSATIONAL_PROMPT.format(query=query)},
+            ],
+            max_tokens=250,
+        )
+        return {"response": resp.choices[0].message.content, "sources": [], "answered": False}
 
-    Retorna:
-      - response (str): texto de respuesta
-      - sources (list): archivos utilizados
-      - answered (bool): True si se encontró contexto suficiente
-    """
     result = retrieve(query, category=category)
-    context = result["context"]
-    sources = result["sources"]
-    top_score = result.get("top_score", -99.0)
+    context   = result["context"]
+    sources   = result["sources"]
+    top_score = result.get("top_score", 99.0)
 
-    # Fallback: sin contexto o confianza insuficiente
-    if not context or top_score < CONFIDENCE_THRESHOLD:
+    # Sin contexto relevante → respuesta conversacional / fallback vía LLM
+    if not context or top_score > MAX_DISTANCE:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": CONVERSATIONAL_SYSTEM},
+                {"role": "user",   "content": CONVERSATIONAL_PROMPT.format(query=query)},
+            ],
+            max_tokens=350,
+        )
         return {
-            "response": _build_fallback(sources),
+            "response": resp.choices[0].message.content,
             "sources": [],
             "answered": False,
         }
 
-    response = client.chat.completions.create(
+    # Respuesta RAG con contexto de documentos
+    resp = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": PROMPT_TEMPLATE.format(context=context, query=query)},
+            {"role": "system", "content": RAG_SYSTEM},
+            {"role": "user",   "content": RAG_PROMPT.format(context=context, query=query)},
         ],
         max_tokens=1024,
     )
 
     return {
-        "response": response.choices[0].message.content,
+        "response": _clean_response(resp.choices[0].message.content),
         "sources": sources,
         "answered": True,
     }
+
+
+def _clean_response(text: str) -> str:
+    """Elimina cualquier sección 'Fuentes:' que el LLM genere en el texto."""
+    return re.sub(
+        r"\n+\*{0,2}fuentes?\*{0,2}:.*$",
+        "",
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    ).strip()
 
 
 if __name__ == "__main__":

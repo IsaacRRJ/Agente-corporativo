@@ -17,10 +17,10 @@ def retrieve(
     results = search(query, k=k_final, category=category)
 
     if not results:
-        return {"context": "", "sources": [], "top_score": -99.0}
+        return {"context": "", "sources": [], "top_score": 99.0}
 
-    # Chroma devuelve distancia (menor = más relevante); convertimos a score
-    top_score = 1 - results[0]["score"] if results else -99.0
+    # Chroma devuelve distancia L2 (menor = más relevante). Se pasa directamente.
+    top_score = results[0]["score"]
 
     context_blocks = []
     for chunk in results:
